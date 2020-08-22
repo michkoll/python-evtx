@@ -17,6 +17,8 @@
 #   limitations under the License.
 #
 #   Version v0.1
+#
+#   Modifications copyright (C) 2020 Michael Koll
 import Evtx.Evtx as evtx
 
 
@@ -50,7 +52,9 @@ def main():
         checksum_string = "fail"
         if fh.calculate_checksum() == fh.checksum():
             checksum_string = "pass"
-        print(("Check sum       : %s" % (checksum_string)))
+
+        # added output of calculated and current checksum
+        print(("Check sum       : %s (Header: %s , Calc: %s)" % (checksum_string, hex(fh.checksum()), hex(fh.calculate_checksum()))))
         print("")
 
         if fh.is_dirty():
@@ -99,15 +103,16 @@ def main():
             if chunk.calculate_data_checksum() == chunk.data_checksum():
                 data_checksum_string = "pass"
 
-            print("%s  %4d   %8d  %8d    %8d  %8d   %s   %s" %
+            # added output of calculated and current checksum
+            print("%s  %4d   %8d  %8d    %8d  %8d   %s (Header: %s , Calc: %s)  %s (Header: %s , Calc: %s)" %
                   (note_string,
                    i,
                    chunk.file_first_record_number(),
                    chunk.file_last_record_number(),
                    chunk.log_first_record_number(),
                    chunk.log_last_record_number(),
-                   header_checksum_string,
-                   data_checksum_string))
+                   header_checksum_string, hex(chunk.header_checksum()), hex(chunk.calculate_header_checksum()),
+                   data_checksum_string, hex(chunk.data_checksum()), hex(chunk.calculate_data_checksum())))
 
 
 if __name__ == "__main__":
