@@ -51,7 +51,7 @@ class Evtx(object):
     Note, this class will mmap the target file, so ensure
       your platform supports this operation.
     """
-    def __init__(self, filename):
+    def __init__(self, filename, readonly=True):
         """
         @type filename:  str
         @param filename: A string that contains the path
@@ -61,10 +61,15 @@ class Evtx(object):
         self._buf = None
         self._f = None
         self._fh = None
+        self._readonly = readonly
 
     def __enter__(self):
-        self._f = open(self._filename, "r+b")
-        self._buf = mmap.mmap(self._f.fileno(), 0, access=mmap.ACCESS_WRITE)
+        if self._readonly:
+            self._f = open(self._filename, "rb")
+            self._buf = mmap.mmap(self._f.fileno(), 0, access=mmap.ACCESS_READ)
+        else:
+            self._f = open(self._filename, "r+b")
+            self._buf = mmap.mmap(self._f.fileno(), 0, access=mmap.ACCESS_WRITE)
         self._fh = FileHeader(self._buf, 0x0)
         return self
 
