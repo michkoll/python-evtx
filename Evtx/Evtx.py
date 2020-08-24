@@ -63,8 +63,8 @@ class Evtx(object):
         self._fh = None
 
     def __enter__(self):
-        self._f = open(self._filename, "rb")
-        self._buf = mmap.mmap(self._f.fileno(), 0, access=mmap.ACCESS_READ)
+        self._f = open(self._filename, "r+b")
+        self._buf = mmap.mmap(self._f.fileno(), 0, access=mmap.ACCESS_WRITE)
         self._fh = FileHeader(self._buf, 0x0)
         return self
 
