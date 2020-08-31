@@ -17,6 +17,9 @@
 #   limitations under the License.
 #
 #   Version v.0.3.0
+#
+#   Modifications copyright (C) 2020 Michael Koll (MK)
+#
 from __future__ import absolute_import
 
 import re
@@ -175,6 +178,24 @@ class FileHeader(Block):
           This is consistent with the checksum stored by the FileHeader.
         """
         return binascii.crc32(self.unpack_binary(0, 0x78)) & 0xFFFFFFFF
+
+    # modified Aug 2020 by Michael Koll
+    def repair_checksum(self):
+        """
+        Updates data_checksum and header_checksum in chunk header.
+
+        @return A boolean that indicates that the FileHeader
+          successfully passes a set of heuristic checks that
+          all EVTX ChunkHeaders should pass.
+        """
+        logger.debug("Modifying header checksum. Old={0} New={1}".format(self.checksum(), self.calculate_checksum()))
+        self.set_field("dword", "checksum", self.calculate_checksum())
+
+        if not self.verify():
+            logger.warning("Header checksum repair of chunk {0} not successful.".format(self._offset))
+            return False
+        else:
+            return True
 
     def verify(self):
         """
@@ -345,6 +366,62 @@ class ChunkHeader(Block):
         """
         data = self.unpack_binary(0x200, self.next_record_offset() - 0x200)
         return binascii.crc32(data) & 0xFFFFFFFF
+
+    # modified Aug 2020 by Michael Koll
+    def repair_header(self, ofs_change=None, ofs_diff=0):
+        """
+        Updates data_checksum and header_checksum in chunk header.
+        Arguments:
+        - `ofs_change`: A dword value with offset position of changed value.
+        - `ofs_diff`: An int value with difference in offset position (newLength - oldLength)
+        @return A boolean that indicates that the FileHeader
+          successfully passes a set of heuristic checks that
+          all EVTX ChunkHeaders should pass.
+        """
+        if ofs_change is not None:
+            if self.offset() < ofs_change < self.offset() + self.last_record_offset():
+                self.set_field("dword", "last_record_offset", self.last_record_offset() + ofs_diff)
+            if self.offset() < ofs_change < self.offset() + self.next_record_offset():
+                self.set_field("dword", "next_record_offset", self.next_record_offset() + ofs_diff)
+
+        logger.debug("Modifying data checksum in chunk {2}. Old={0} New={1}".format(hex(self.data_checksum()),
+                                                                                    hex(self.calculate_data_checksum()),
+                                                                                    self._offset))
+        self.set_field("dword", "data_checksum", self.calculate_data_checksum())
+        logger.debug("Modifying header checksum in chunk {2}. Old={0} New={1}".format(hex(self.header_checksum()),
+                                                                                      hex(self.calculate_header_checksum()),
+                                                                                      self._offset))
+        self.set_field("dword", "header_checksum", self.calculate_header_checksum())
+
+        if not self.verify():
+            logger.warning("Header checksum repair of chunk {0} not successful.".format(self._offset))
+            return False
+        else:
+            return True
+
+    # modified Aug 2020 by Michael Koll
+    def repair_tables(self, ofs_change, ofs_diff):
+        """
+        Updates offsets in string and template table.
+        Arguments:
+        - `ofs_change`: A dword value with offset position of changed value.
+        - `ofs_diff`: An int value with difference in offset position (newLength - oldLength)
+        """
+        # repair string table
+        o = self._off_header_checksum + 4
+        for i in range(64):
+            ofs = self.unpack_dword(o)
+            if ofs + self.offset() > ofs_change:
+                self.pack_dword(o, ofs + ofs_diff)
+            o += 4
+
+        # repair template table
+        o = self._off_header_checksum + 4 + 128
+        for i in range(32):
+            ofs = self.unpack_dword(o)
+            if ofs + self.offset() > ofs_change:
+                self.pack_dword(o, ofs + ofs_diff)
+            o += 4
 
     def verify(self):
         """

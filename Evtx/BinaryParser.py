@@ -17,6 +17,9 @@
 #   limitations under the License.
 #
 #   Version v.0.3.0
+#
+#   Modifications copyright (C) 2020 Michael Koll (MK)
+#
 from __future__ import absolute_import
 
 import struct
@@ -187,6 +190,19 @@ class Block(object):
 
     def __str__(self):
         return str(self)
+
+    # modified Aug 2020 by Michael Koll
+    def set_field(self, type, name, value):
+        """
+        Writes new values to buffer.
+        Arguments:
+        - `type`: A string. Should be one of the unpack_* types.
+        - `name`: A string.
+        - `value`: New value.
+        """
+        o = getattr(self, "_off_" + name)
+        f = getattr(self, "pack_" + type)
+        f(o, value)
 
     def declare_field(self, type, name, offset=None, length=None):
         """
@@ -360,6 +376,23 @@ class Block(object):
         except struct.error:
             raise OverrunBufferException(o, len(self._buf))
 
+    # modified Aug 2020 by Michael Koll
+    def pack_dword(self, offset, value):
+        """
+        Writes dword value in buffer at offset.
+        Arguments:
+        - `offset`: The relative offset from the start of the block.
+        - `value`: The value written to buffer.
+        Throws:
+        - `Exception`
+        """
+        o = self._offset + offset
+        try:
+            struct.pack_into("<I", self._buf, o, value)
+        except struct.error as e:
+            raise e
+
+
     def unpack_dword_be(self, offset):
         """
         Returns a big-endian DWORD (4 bytes) from the relative offset.
@@ -493,6 +526,9 @@ class Block(object):
             return bytes(self._buf[start:end]).decode("utf16")
         except AttributeError:  # already a 'str' ?
             return bytes(self._buf[start:end]).decode('utf16')
+
+
+
 
     def unpack_dosdate(self, offset):
         """
