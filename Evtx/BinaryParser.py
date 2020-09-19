@@ -22,11 +22,14 @@
 #
 from __future__ import absolute_import
 
+import logging
 import struct
 from datetime import datetime
 from functools import partial
 
 import six
+
+logger = logging.getLogger(__name__)
 
 
 class memoize(object):
@@ -48,6 +51,7 @@ class memoize(object):
     Obj.add_to(1) # not enough arguments
     Obj.add_to(1, 2) # returns 3, result is not cached
     """
+
     def __init__(self, func):
         self.func = func
 
@@ -87,19 +91,19 @@ def dosdate(dosdate, dostime):
     returns: datetime.datetime or datetime.datetime.min on error
     """
     try:
-        t  = ord(dosdate[1]) << 8
+        t = ord(dosdate[1]) << 8
         t |= ord(dosdate[0])
-        day   = t & 0b0000000000011111
+        day = t & 0b0000000000011111
         month = (t & 0b0000000111100000) >> 5
-        year  = (t & 0b1111111000000000) >> 9
+        year = (t & 0b1111111000000000) >> 9
         year += 1980
 
-        t  = ord(dostime[1]) << 8
+        t = ord(dostime[1]) << 8
         t |= ord(dostime[0])
-        sec     = t & 0b0000000000011111
-        sec    *= 2
-        minute  = (t & 0b0000011111100000) >> 5
-        hour    = (t & 0b1111100000000000) >> 11
+        sec = t & 0b0000000000011111
+        sec *= 2
+        minute = (t & 0b0000011111100000) >> 5
+        hour = (t & 0b1111100000000000) >> 11
 
         return datetime(year, month, day, hour, minute, sec)
     except:
@@ -110,7 +114,7 @@ def parse_filetime(qword):
     # see http://integriography.wordpress.com/2010/01/16/using-phython-to-parse-and-present-windows-64-bit-timestamps/
     if qword == 0:
         return datetime.min
-    
+
     try:
         return datetime.utcfromtimestamp(float(qword) * 1e-7 - 11644473600)
     except (ValueError, OSError):
@@ -121,6 +125,7 @@ class BinaryParserException(Exception):
     """
     Base Exception class for binary parsing.
     """
+
     def __init__(self, value):
         """
         Constructor.
@@ -142,6 +147,7 @@ class ParseException(BinaryParserException):
     An exception to be thrown during binary parsing, such as
     when an invalid header is encountered.
     """
+
     def __init__(self, value):
         """
         Constructor.
@@ -174,6 +180,7 @@ class Block(object):
     Base class for structure blocks in binary parsing.
     A block is associated with a offset into a byte-string.
     """
+
     def __init__(self, buf, offset):
         """
         Constructor.
@@ -192,7 +199,7 @@ class Block(object):
         return str(self)
 
     # modified Aug 2020 by Michael Koll
-    def set_field(self, type, name, value):
+    def set_field(self, type, name, value, offset=None, length=None):
         """
         Writes new values to buffer.
         Arguments:
@@ -200,9 +207,18 @@ class Block(object):
         - `name`: A string.
         - `value`: New value.
         """
-        o = getattr(self, "_off_" + name)
-        f = getattr(self, "pack_" + type)
-        f(o, value)
+        if offset is None:
+            offset = getattr(self, "_off_" + name)
+
+        logger.debug("Set field {0} at offset {1} to {2}.".format(name, self.offset() + offset, value))
+
+        if length is None:
+            f = getattr(self, "pack_" + type)
+            return f(offset, value)
+        else:
+            f = getattr(self, "pack_" + type)
+            return f(offset, value, length)
+        #f(offset, value)
 
     def declare_field(self, type, name, offset=None, length=None):
         """
@@ -222,12 +238,14 @@ class Block(object):
             def no_length_handler():
                 f = getattr(self, "unpack_" + type)
                 return f(offset)
+
             setattr(self, name, no_length_handler)
         else:
 
             def explicit_length_handler():
                 f = getattr(self, "unpack_" + type)
                 return f(offset, length)
+
             setattr(self, name, explicit_length_handler)
 
         setattr(self, "_off_" + name, offset)
@@ -389,9 +407,9 @@ class Block(object):
         o = self._offset + offset
         try:
             struct.pack_into("<I", self._buf, o, value)
+            return None
         except struct.error as e:
             raise e
-
 
     def unpack_dword_be(self, offset):
         """
@@ -510,6 +528,37 @@ class Block(object):
         """
         return self.unpack_binary(offset, length).decode('ascii')
 
+    # modified Aug 2020 by Michael Koll
+    def pack_wstring(self, offset, value, old_length):
+        """
+        Writes dword value in buffer at offset.
+        Arguments:
+        - `offset`: The relative offset from the start of the block.
+        - `value`: The value written to buffer.
+        - `length`: Length diff
+        Returns:
+        - Length of new value
+        Throws:
+        - `Exception`
+        """
+        offset = self._offset + offset
+
+        # get old value for size information
+        old_value = bytes(self._buf[offset:offset + old_length])
+        # encode new value
+        new_value_enc = value.encode("utf-16le")
+        # move content after change position
+        if len(new_value_enc) >= len(old_value):
+            logger.debug("Dest: {0} Src: {1} Count: {2}".format(offset + len(new_value_enc), offset + len(old_value), self._buf.size() - offset - len(new_value_enc)))
+            self._buf.move(offset + len(new_value_enc), offset + len(old_value), self._buf.size() - offset - len(new_value_enc))
+        else:
+            logger.debug("Dest: {0} Src: {1} Count: {2}".format(offset + len(new_value_enc), offset + len(old_value),
+                                                                self._buf.size() - offset - len(old_value)))
+            self._buf.move(offset + len(new_value_enc), offset + len(old_value),
+                           self._buf.size() - offset - len(old_value))
+        # write new value
+        struct.pack_into("<{0}s".format(len(new_value_enc)), self._buf, offset, value.encode("utf-16le"))
+
     def unpack_wstring(self, offset, length):
         """
         Returns a string from the relative offset with the given length,
@@ -526,9 +575,6 @@ class Block(object):
             return bytes(self._buf[start:end]).decode("utf16")
         except AttributeError:  # already a 'str' ?
             return bytes(self._buf[start:end]).decode('utf16')
-
-
-
 
     def unpack_dosdate(self, offset):
         """

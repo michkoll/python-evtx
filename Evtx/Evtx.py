@@ -412,14 +412,16 @@ class ChunkHeader(Block):
         for i in range(64):
             ofs = self.unpack_dword(o)
             if ofs + self.offset() > ofs_change:
+
                 self.pack_dword(o, ofs + ofs_diff)
             o += 4
 
         # repair template table
-        o = self._off_header_checksum + 4 + 128
+        o = self._off_header_checksum + 4 + 256
         for i in range(32):
             ofs = self.unpack_dword(o)
             if ofs + self.offset() > ofs_change:
+                self._templates[ofs + ofs_diff] = self._templates.pop(ofs)
                 self.pack_dword(o, ofs + ofs_diff)
             o += 4
 
