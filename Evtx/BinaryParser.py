@@ -22,12 +22,15 @@
 #
 from __future__ import absolute_import
 
+import binascii
 import logging
 import struct
+import time
 from datetime import datetime
 from functools import partial
 
 import six
+
 
 logger = logging.getLogger(__name__)
 
@@ -311,6 +314,19 @@ class Block(object):
         except struct.error:
             raise OverrunBufferException(o, len(self._buf))
 
+    def pack_byte(self, offset, value):
+        """
+        Applies the little-endian WORD (2 bytes) to the relative offset.
+        Arguments:
+        - `offset`: The relative offset from the start of the block.
+        - `word`: The data to apply.
+        """
+        o = self._offset + offset
+        try:
+            return struct.pack_into("<B", self._buf, o, int(value))
+        except Exception as e:
+            raise ValueError("{0} cannot be casted to byte.".format(value))
+
     def unpack_int8(self, offset):
         """
         Returns a little-endian signed byte from the relative offset.
@@ -324,6 +340,19 @@ class Block(object):
             return struct.unpack_from("<b", self._buf, o)[0]
         except struct.error:
             raise OverrunBufferException(o, len(self._buf))
+
+    def pack_int8(self, offset, value):
+        """
+        Applies the little-endian WORD (2 bytes) to the relative offset.
+        Arguments:
+        - `offset`: The relative offset from the start of the block.
+        - `word`: The data to apply.
+        """
+        o = self._offset + offset
+        try:
+            return struct.pack_into("<b", self._buf, o, int(value))
+        except Exception as e:
+            raise ValueError("{0} cannot be casted to int8.".format(value))
 
     def unpack_word(self, offset):
         """
@@ -340,6 +369,19 @@ class Block(object):
         except struct.error:
             raise OverrunBufferException(o, len(self._buf))
 
+    def pack_word(self, offset, value):
+        """
+        Applies the little-endian WORD (2 bytes) to the relative offset.
+        Arguments:
+        - `offset`: The relative offset from the start of the block.
+        - `word`: The data to apply.
+        """
+        o = self._offset + offset
+        try:
+            return struct.pack_into("<H", self._buf, o, int(value))
+        except Exception as e:
+            raise ValueError("{0} cannot be casted to word.".format(value))
+
     def unpack_word_be(self, offset):
         """
         Returns a big-endian unsigned WORD (2 bytes) from the
@@ -354,6 +396,19 @@ class Block(object):
             return struct.unpack_from(">H", self._buf, o)[0]
         except struct.error:
             raise OverrunBufferException(o, len(self._buf))
+
+    def pack_word_be(self, offset, value):
+        """
+        Applies the little-endian WORD (2 bytes) to the relative offset.
+        Arguments:
+        - `offset`: The relative offset from the start of the block.
+        - `word`: The data to apply.
+        """
+        o = self._offset + offset
+        try:
+            return struct.pack_into(">H", self._buf, o, int(value))
+        except Exception as e:
+            raise ValueError("{0} cannot be casted to word.".format(value))
 
     def unpack_int16(self, offset):
         """
@@ -370,7 +425,7 @@ class Block(object):
         except struct.error:
             raise OverrunBufferException(o, len(self._buf))
 
-    def pack_word(self, offset, word):
+    def pack_int16(self, offset, value):
         """
         Applies the little-endian WORD (2 bytes) to the relative offset.
         Arguments:
@@ -378,7 +433,10 @@ class Block(object):
         - `word`: The data to apply.
         """
         o = self._offset + offset
-        return struct.pack_into("<H", self._buf, o, word)
+        try:
+            return struct.pack_into("<h", self._buf, o, int(value))
+        except Exception as e:
+            raise ValueError("{0} cannot be casted to int16.".format(value))
 
     def unpack_dword(self, offset):
         """
@@ -406,7 +464,7 @@ class Block(object):
         """
         o = self._offset + offset
         try:
-            struct.pack_into("<I", self._buf, o, value)
+            struct.pack_into("<I", self._buf, o, int(value))
             return None
         except struct.error as e:
             raise e
@@ -440,6 +498,19 @@ class Block(object):
         except struct.error:
             raise OverrunBufferException(o, len(self._buf))
 
+    def pack_int32(self, offset, value):
+        """
+        Applies the little-endian WORD (2 bytes) to the relative offset.
+        Arguments:
+        - `offset`: The relative offset from the start of the block.
+        - `word`: The data to apply.
+        """
+        o = self._offset + offset
+        try:
+            return struct.pack_into("<i", self._buf, o, value)
+        except Exception as e:
+            raise ValueError("{0} cannot be casted to int32.".format(value))
+
     def unpack_qword(self, offset):
         """
         Returns a little-endian QWORD (8 bytes) from the relative offset.
@@ -453,6 +524,19 @@ class Block(object):
             return struct.unpack_from("<Q", self._buf, o)[0]
         except struct.error:
             raise OverrunBufferException(o, len(self._buf))
+
+    def pack_qword(self, offset, value):
+        """
+        Applies the little-endian WORD (2 bytes) to the relative offset.
+        Arguments:
+        - `offset`: The relative offset from the start of the block.
+        - `word`: The data to apply.
+        """
+        o = self._offset + offset
+        try:
+            return struct.pack_into("<Q", self._buf, o, value)
+        except Exception as e:
+            raise ValueError("{0} cannot be casted to qword.".format(value))
 
     def unpack_int64(self, offset):
         """
@@ -469,6 +553,19 @@ class Block(object):
         except struct.error:
             raise OverrunBufferException(o, len(self._buf))
 
+    def pack_int64(self, offset, value):
+        """
+        Applies the little-endian WORD (2 bytes) to the relative offset.
+        Arguments:
+        - `offset`: The relative offset from the start of the block.
+        - `word`: The data to apply.
+        """
+        o = self._offset + offset
+        try:
+            return struct.pack_into("<q", self._buf, o, value)
+        except Exception as e:
+            raise ValueError("{0} cannot be casted to int64.".format(value))
+
     def unpack_float(self, offset):
         """
         Returns a single-precision float (4 bytes) from
@@ -484,6 +581,19 @@ class Block(object):
         except struct.error:
             raise OverrunBufferException(o, len(self._buf))
 
+    def pack_float(self, offset, value):
+        """
+        Applies the little-endian WORD (2 bytes) to the relative offset.
+        Arguments:
+        - `offset`: The relative offset from the start of the block.
+        - `word`: The data to apply.
+        """
+        o = self._offset + offset
+        try:
+            return struct.pack_into("<f", self._buf, o, value)
+        except Exception as e:
+            raise ValueError("{0} cannot be casted to float.".format(value))
+
     def unpack_double(self, offset):
         """
         Returns a double-precision float (8 bytes) from
@@ -498,6 +608,19 @@ class Block(object):
             return struct.unpack_from("<d", self._buf, o)[0]
         except struct.error:
             raise OverrunBufferException(o, len(self._buf))
+
+    def pack_double(self, offset, value):
+        """
+        Applies the little-endian WORD (2 bytes) to the relative offset.
+        Arguments:
+        - `offset`: The relative offset from the start of the block.
+        - `word`: The data to apply.
+        """
+        o = self._offset + offset
+        try:
+            return struct.pack_into("<d", self._buf, o, value)
+        except Exception as e:
+            raise ValueError("{0} cannot be casted to double.".format(value))
 
     def unpack_binary(self, offset, length=False):
         """
@@ -517,6 +640,22 @@ class Block(object):
         except struct.error:
             raise OverrunBufferException(o, len(self._buf))
 
+    def pack_binary(self, offset, value, length=False):
+        """
+        Applies the little-endian WORD (2 bytes) to the relative offset.
+        Arguments:
+        - `offset`: The relative offset from the start of the block.
+        - `word`: The data to apply.
+        """
+        if not length:
+            raise AttributeError("No length for binary value given.")
+        o = self._offset + offset
+        try:
+            new = value.to_bytes(length, 'little', signed=False)
+            return struct.pack_into("<{}s".format(length), self._buf, o, new)
+        except Exception as e:
+            raise e
+
     def unpack_string(self, offset, length):
         """
         Returns a string from the relative offset with the given length.
@@ -527,6 +666,28 @@ class Block(object):
         - `OverrunBufferException`
         """
         return self.unpack_binary(offset, length).decode('ascii')
+
+    def pack_string(self, offset, value, old_length):
+        """
+        Applies the little-endian WORD (2 bytes) to the relative offset.
+        Arguments:
+        - `offset`: The relative offset from the start of the block.
+        - `word`: The data to apply.
+        """
+        o = self._offset + offset
+        old_value = self.unpack_binary(offset, old_length).decode('ascii')
+        new_value_enc = value.encode("ascii")
+
+        if len(new_value_enc) >= len(old_value):
+            logger.debug("Dest: {0} Src: {1} Count: {2}".format(offset + len(new_value_enc), offset + len(old_value), self._buf.size() - offset - len(new_value_enc)))
+            self._buf.move(offset + len(new_value_enc), offset + len(old_value), self._buf.size() - offset - len(new_value_enc))
+        else:
+            logger.debug("Dest: {0} Src: {1} Count: {2}".format(offset + len(new_value_enc), offset + len(old_value),
+                                                                self._buf.size() - offset - len(old_value)))
+            self._buf.move(offset + len(new_value_enc), offset + len(old_value),
+                           self._buf.size() - offset - len(old_value))
+        # write new value
+        struct.pack_into("<{0}s".format(len(new_value_enc)), self._buf, offset, value.encode("ascii"))
 
     # modified Aug 2020 by Michael Koll
     def pack_wstring(self, offset, value, old_length):
@@ -602,6 +763,20 @@ class Block(object):
         """
         return parse_filetime(self.unpack_qword(offset))
 
+    def pack_filetime(self, offset, value):
+        """
+        Applies the little-endian WORD (2 bytes) to the relative offset.
+        Arguments:
+        - `offset`: The relative offset from the start of the block.
+        - `word`: The data to apply.
+        """
+        o = self._offset + offset
+        timestamp = (datetime.timestamp(value) + 11644473600) / 1e-7
+        try:
+            return self.pack_qword(offset, int(timestamp))
+        except Exception as e:
+            raise e
+
     def unpack_systemtime(self, offset):
         """
         Returns a datetime from the QWORD Windows SYSTEMTIME timestamp
@@ -660,3 +835,20 @@ class Block(object):
           offset of this block.
         """
         return self._offset
+
+    def move_buffer(self, old_length, new_length, offset = None):
+        """
+        Moves all buffer values after offset
+        """
+        if offset is None:
+            o = self._offset
+        else:
+            o = offset
+        if new_length > old_length:
+            self._buf.move(o + new_length, o + old_length,
+                       self._buf.size() - o - new_length)
+        else:
+            self._buf.move(o + new_length, o + old_length,
+                           self._buf.size() - o - old_length)
+
+
