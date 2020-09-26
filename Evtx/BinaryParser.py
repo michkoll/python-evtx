@@ -314,6 +314,7 @@ class Block(object):
         except struct.error:
             raise OverrunBufferException(o, len(self._buf))
 
+    # modified Aug 2020 by Michael Koll
     def pack_byte(self, offset, value):
         """
         Applies the little-endian WORD (2 bytes) to the relative offset.
@@ -341,6 +342,7 @@ class Block(object):
         except struct.error:
             raise OverrunBufferException(o, len(self._buf))
 
+    # modified Aug 2020 by Michael Koll
     def pack_int8(self, offset, value):
         """
         Applies the little-endian WORD (2 bytes) to the relative offset.
@@ -397,6 +399,7 @@ class Block(object):
         except struct.error:
             raise OverrunBufferException(o, len(self._buf))
 
+    # modified Aug 2020 by Michael Koll
     def pack_word_be(self, offset, value):
         """
         Applies the little-endian WORD (2 bytes) to the relative offset.
@@ -425,6 +428,7 @@ class Block(object):
         except struct.error:
             raise OverrunBufferException(o, len(self._buf))
 
+    # modified Aug 2020 by Michael Koll
     def pack_int16(self, offset, value):
         """
         Applies the little-endian WORD (2 bytes) to the relative offset.
@@ -498,6 +502,7 @@ class Block(object):
         except struct.error:
             raise OverrunBufferException(o, len(self._buf))
 
+    # modified Aug 2020 by Michael Koll
     def pack_int32(self, offset, value):
         """
         Applies the little-endian WORD (2 bytes) to the relative offset.
@@ -525,6 +530,7 @@ class Block(object):
         except struct.error:
             raise OverrunBufferException(o, len(self._buf))
 
+    # modified Aug 2020 by Michael Koll
     def pack_qword(self, offset, value):
         """
         Applies the little-endian WORD (2 bytes) to the relative offset.
@@ -553,6 +559,7 @@ class Block(object):
         except struct.error:
             raise OverrunBufferException(o, len(self._buf))
 
+    # modified Aug 2020 by Michael Koll
     def pack_int64(self, offset, value):
         """
         Applies the little-endian WORD (2 bytes) to the relative offset.
@@ -581,6 +588,7 @@ class Block(object):
         except struct.error:
             raise OverrunBufferException(o, len(self._buf))
 
+    # modified Aug 2020 by Michael Koll
     def pack_float(self, offset, value):
         """
         Applies the little-endian WORD (2 bytes) to the relative offset.
@@ -609,6 +617,7 @@ class Block(object):
         except struct.error:
             raise OverrunBufferException(o, len(self._buf))
 
+    # modified Aug 2020 by Michael Koll
     def pack_double(self, offset, value):
         """
         Applies the little-endian WORD (2 bytes) to the relative offset.
@@ -640,6 +649,7 @@ class Block(object):
         except struct.error:
             raise OverrunBufferException(o, len(self._buf))
 
+    # modified Aug 2020 by Michael Koll
     def pack_binary(self, offset, value, length=False):
         """
         Applies the little-endian WORD (2 bytes) to the relative offset.
@@ -667,6 +677,7 @@ class Block(object):
         """
         return self.unpack_binary(offset, length).decode('ascii')
 
+    # modified Aug 2020 by Michael Koll
     def pack_string(self, offset, value, old_length):
         """
         Applies the little-endian WORD (2 bytes) to the relative offset.
@@ -763,6 +774,7 @@ class Block(object):
         """
         return parse_filetime(self.unpack_qword(offset))
 
+    # modified Aug 2020 by Michael Koll
     def pack_filetime(self, offset, value):
         """
         Applies the little-endian WORD (2 bytes) to the relative offset.
@@ -836,6 +848,7 @@ class Block(object):
         """
         return self._offset
 
+    # modified Aug 2020 by Michael Koll
     def move_buffer(self, old_length, new_length, offset = None):
         """
         Moves all buffer values after offset
