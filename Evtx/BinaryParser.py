@@ -849,7 +849,7 @@ class Block(object):
         return self._offset
 
     # modified Aug 2020 by Michael Koll
-    def move_buffer(self, old_length, new_length, offset = None):
+    def move_buffer(self, old_length, new_length, offset = None, max_offset = None, fill_zero = False):
         """
         Moves all buffer values after offset
         """
@@ -857,11 +857,18 @@ class Block(object):
             o = self._offset
         else:
             o = offset
+        if max_offset is None:
+            max_offset = self._buf.size()
+
         if new_length > old_length:
             self._buf.move(o + new_length, o + old_length,
-                       self._buf.size() - o - new_length)
+                       max_offset - o - new_length)
         else:
             self._buf.move(o + new_length, o + old_length,
-                           self._buf.size() - o - old_length)
+                           max_offset - o - old_length)
+
+        if fill_zero:
+            off_end = o + new_length + (max_offset - o - old_length)
+            self._buf[max_offset - abs(new_length - old_length):max_offset] = bytearray(abs(new_length - old_length))
 
 

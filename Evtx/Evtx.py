@@ -379,9 +379,9 @@ class ChunkHeader(Block):
           all EVTX ChunkHeaders should pass.
         """
         if ofs_change is not None:
-            if self.offset() < ofs_change < self.offset() + self.last_record_offset():
+            if self.offset() < ofs_change <= self.offset() + self.last_record_offset():
                 self.set_field("dword", "last_record_offset", self.last_record_offset() + ofs_diff)
-            if self.offset() < ofs_change < self.offset() + self.next_record_offset():
+            if self.offset() < ofs_change <= self.offset() + self.next_record_offset():
                 self.set_field("dword", "next_record_offset", self.next_record_offset() + ofs_diff)
 
         logger.debug("Modifying data checksum in chunk {2}. Old={0} New={1}".format(hex(self.data_checksum()),
