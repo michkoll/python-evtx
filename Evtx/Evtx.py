@@ -425,6 +425,7 @@ class ChunkHeader(Block):
                 self.pack_dword(o, ofs + ofs_diff)
             o += 4
 
+
     def verify(self):
         """
         @return A boolean that indicates that the FileHeader
@@ -554,6 +555,10 @@ class Record(Block):
 
     def root(self):
         return RootNode(self._buf, self._offset + 0x18, self._chunk, self)
+
+    # modified Nov 2020 by Michael Koll
+    def chunk(self):
+        return self._chunk
 
     def length(self):
         return self.size()

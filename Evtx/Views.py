@@ -256,8 +256,7 @@ def evtx_template_readable_view(root_node, cache=None):
                     rec(child.attribute_value(), acc)
                     acc.append("\"")
             acc.append(">")
-            for child in node.children():
-                rec(child, acc)
+            rec(child, acc)
             acc.append("</")
             acc.append(node.tag_name())
             acc.append(">\n")

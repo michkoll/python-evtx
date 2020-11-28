@@ -130,6 +130,18 @@ class BXmlNode(Block):
         """
         raise NotImplementedError("tag_length not implemented for {!r}").format(self)
 
+    # modified Nov 2020 by Michael Koll
+    def set_value(self, new_value, old_length = None):
+        """
+        This method must be implemented and overridden for all BXmlNodes.
+        Args:
+            new_value: New value of node
+            old_length: length of old value
+
+        Returns: True if successful, otherwise False
+        """
+        raise NotImplementedError("set_value not implemented for {!r}").format(self)
+
     def _children(self, max_children=None,
                   end_tokens=[SYSTEM_TOKENS.EndOfStreamToken]):
         """
@@ -1117,6 +1129,15 @@ class WstringTypeNode(VariantTypeNode):
     def string(self):
         return self._string().rstrip("\x00")
 
+    # modified Nov 2020 by Michael Koll
+    def set_value(self, new_value, old_length = None):
+        if old_length is None:
+            self.set_field("wstring", "_string", new_value, length=self.length())
+        else:
+            self.set_field("word", "string_length", len(new_value))
+            self.set_field("wstring", "_string", new_value, length=old_length)
+
+
 
 class StringTypeNode(VariantTypeNode):
     """
@@ -1140,6 +1161,14 @@ class StringTypeNode(VariantTypeNode):
     def string(self):
         return self._string().rstrip("\x00")
 
+    # modified Nov 2020 by Michael Koll
+    def set_value(self, new_value, old_length = None):
+        if old_length is None:
+            self.set_field("wstring", "_string", new_value, length=self.length())
+        else:
+            self.set_field("word", "string_length", len(new_value))
+            self.set_field("wstring", "_string", new_value, length=old_length)
+
 
 class SignedByteTypeNode(VariantTypeNode):
     """
@@ -1155,6 +1184,10 @@ class SignedByteTypeNode(VariantTypeNode):
 
     def string(self):
         return str(self.byte())
+
+    # modified Nov 2020 by Michael Koll
+    def set_value(self, new_value, old_length=None):
+        self.set_field("int8", "byte", new_value)
 
 
 class UnsignedByteTypeNode(VariantTypeNode):
@@ -1173,6 +1206,10 @@ class UnsignedByteTypeNode(VariantTypeNode):
     def string(self):
         return str(self.byte())
 
+    # modified Nov 2020 by Michael Koll
+    def set_value(self, new_value, old_length=None):
+        self.set_field("byte", "byte", new_value)
+
 
 class SignedWordTypeNode(VariantTypeNode):
     """
@@ -1188,6 +1225,10 @@ class SignedWordTypeNode(VariantTypeNode):
 
     def string(self):
         return str(self.word())
+
+    # modified Nov 2020 by Michael Koll
+    def set_value(self, new_value, old_length=None):
+        self.set_field("int16", "word", new_value)
 
 
 class UnsignedWordTypeNode(VariantTypeNode):
@@ -1206,6 +1247,10 @@ class UnsignedWordTypeNode(VariantTypeNode):
     def string(self):
         return str(self.word())
 
+    # modified Nov 2020 by Michael Koll
+    def set_value(self, new_value, old_length=None):
+        self.set_field("word", "word", new_value)
+
 
 class SignedDwordTypeNode(VariantTypeNode):
     """
@@ -1221,6 +1266,10 @@ class SignedDwordTypeNode(VariantTypeNode):
 
     def string(self):
         return str(self.dword())
+
+    # modified Nov 2020 by Michael Koll
+    def set_value(self, new_value, old_length=None):
+        self.set_field("int32", "dword", new_value)
 
 
 class UnsignedDwordTypeNode(VariantTypeNode):
@@ -1239,6 +1288,10 @@ class UnsignedDwordTypeNode(VariantTypeNode):
     def string(self):
         return str(self.dword())
 
+    # modified Nov 2020 by Michael Koll
+    def set_value(self, new_value, old_length=None):
+        self.set_field("dword", "dword", new_value)
+
 
 class SignedQwordTypeNode(VariantTypeNode):
     """
@@ -1254,6 +1307,10 @@ class SignedQwordTypeNode(VariantTypeNode):
 
     def string(self):
         return str(self.qword())
+
+    # modified Nov 2020 by Michael Koll
+    def set_value(self, new_value, old_length=None):
+        self.set_field("int64", "qword", new_value)
 
 
 class UnsignedQwordTypeNode(VariantTypeNode):
@@ -1272,6 +1329,10 @@ class UnsignedQwordTypeNode(VariantTypeNode):
     def string(self):
         return str(self.qword())
 
+    # modified Nov 2020 by Michael Koll
+    def set_value(self, new_value, old_length=None):
+        self.set_field("qword", "qword", new_value)
+
 
 class FloatTypeNode(VariantTypeNode):
     """
@@ -1288,6 +1349,10 @@ class FloatTypeNode(VariantTypeNode):
     def string(self):
         return str(self.float())
 
+    # modified Nov 2020 by Michael Koll
+    def set_value(self, new_value, old_length=None):
+        self.set_field("float", "float", new_value)
+
 
 class DoubleTypeNode(VariantTypeNode):
     """
@@ -1303,6 +1368,10 @@ class DoubleTypeNode(VariantTypeNode):
 
     def string(self):
         return str(self.double())
+
+    # modified Nov 2020 by Michael Koll
+    def set_value(self, new_value, old_length=None):
+        self.set_field("double", "double", new_value)
 
 
 class BooleanTypeNode(VariantTypeNode):
@@ -1321,6 +1390,10 @@ class BooleanTypeNode(VariantTypeNode):
         if self.int32() > 0:
             return "True"
         return "False"
+
+    # modified Nov 2020 by Michael Koll
+    def set_value(self, new_value, old_length=None):
+        self.set_field("int32", "int32", new_value)
 
 
 class BinaryTypeNode(VariantTypeNode):
@@ -1346,6 +1419,10 @@ class BinaryTypeNode(VariantTypeNode):
     def string(self):
         return base64.b64encode(self.binary()).decode('ascii')
 
+    # modified Nov 2020 by Michael Koll
+    def set_value(self, new_value, old_length=None):
+        self.set_field("binary", "binary", new_value, length=self.length())
+
 
 class GuidTypeNode(VariantTypeNode):
     """
@@ -1361,6 +1438,10 @@ class GuidTypeNode(VariantTypeNode):
 
     def string(self):
         return '{' + self.guid() + '}'
+
+    # modified Nov 2020 by Michael Koll
+    def set_value(self, new_value, old_length=None):
+        self.set_field("guid", "guid", new_value)
 
 
 class SizeTypeNode(VariantTypeNode):
@@ -1387,6 +1468,8 @@ class SizeTypeNode(VariantTypeNode):
     def string(self):
         return str(self.num())
 
+    #TODO: implement set_value
+
 
 class FiletimeTypeNode(VariantTypeNode):
     """
@@ -1403,6 +1486,10 @@ class FiletimeTypeNode(VariantTypeNode):
     def tag_length(self):
         return 8
 
+    # modified Nov 2020 by Michael Koll
+    def set_value(self, new_value, old_length=None):
+        self.set_field("filetime", "filetime", new_value)
+
 
 class SystemtimeTypeNode(VariantTypeNode):
     """
@@ -1418,6 +1505,8 @@ class SystemtimeTypeNode(VariantTypeNode):
 
     def string(self):
         return self.systemtime().isoformat(' ')
+
+    #TODO: implement set_value
 
 
 class SIDTypeNode(VariantTypeNode):
@@ -1453,6 +1542,18 @@ class SIDTypeNode(VariantTypeNode):
     def string(self):
         return self.id()
 
+    # modified Nov 2020 by Michael Koll
+    def set_value(self, new_value, old_length=None):
+        new_value_arr = new_value.split('-')
+        self.set_field("byte", "version", new_value_arr[1])
+        self.set_field("byte", "num_elements", len(new_value_arr) - 3)
+        self.set_field("word_be", "id_low", new_value_arr[2])
+        element_offset = self._off_id_low + 2
+        for element in new_value_arr[3:]:
+            self.pack_dword(element_offset, element)
+            element_offset += 4
+        self.set_field("int32", "int32", new_value)
+
 
 class Hex32TypeNode(VariantTypeNode):
     """
@@ -1473,6 +1574,10 @@ class Hex32TypeNode(VariantTypeNode):
             ret += '{:02x}'.format(six.indexbytes(b, i))
         return ret
 
+    # modified Nov 2020 by Michael Koll
+    def set_value(self, new_value, old_length=None):
+        self.set_field("binary", "hex", new_value, length=0x4)
+
 
 class Hex64TypeNode(VariantTypeNode):
     """
@@ -1492,6 +1597,10 @@ class Hex64TypeNode(VariantTypeNode):
         for i in range(len(b)):
             ret += '{:02x}'.format(six.indexbytes(b, i))
         return ret
+
+    # modified Nov 2020 by Michael Koll
+    def set_value(self, new_value, old_length=None):
+        self.set_field("binary", "hex", new_value, length=0x8)
 
 
 class BXmlTypeNode(VariantTypeNode):
