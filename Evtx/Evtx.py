@@ -425,6 +425,26 @@ class ChunkHeader(Block):
                 self.pack_dword(o, ofs + ofs_diff)
             o += 4
 
+    # modified Aug 2020 by Michael Koll
+    def change_template_offset(self, old_offset, new_offset):
+        """
+        Updates template offset in case of moving resident template to new record
+
+        Args:
+            old_offset: offset of old resident template
+            new_offset: offset of new resident template
+        """
+        # change offset to template
+        o = self._off_header_checksum + 4 + 256
+        for i in range(32):
+            ofs = self.unpack_dword(o)
+            if ofs == old_offset:
+                self._templates[ofs] = new_offset
+                self.pack_dword(o, new_offset)
+                return
+            o += 4
+
+
 
     def verify(self):
         """
