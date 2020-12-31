@@ -1552,7 +1552,7 @@ class SIDTypeNode(VariantTypeNode):
         for element in new_value_arr[3:]:
             self.pack_dword(element_offset, element)
             element_offset += 4
-        self.set_field("int32", "int32", new_value)
+        #self.set_field("int32", "int32", new_value)
 
 
 class Hex32TypeNode(VariantTypeNode):
