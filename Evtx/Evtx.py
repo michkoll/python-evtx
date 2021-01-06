@@ -203,9 +203,10 @@ class FileHeader(Block):
           successfully passes a set of heuristic checks that
           all EVTX FileHeaders should pass.
         """
+        # modified Jan 21 by Michael Koll, removed minor version check
+        # self.minor_version() == 0x1 and \
         return self.check_magic() and \
             self.major_version() == 0x3 and \
-            self.minor_version() == 0x1 and \
             self.header_chunk_size() == 0x1000 and \
             self.checksum() == self.calculate_checksum()
 
