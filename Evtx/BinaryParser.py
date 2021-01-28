@@ -720,14 +720,20 @@ class Block(object):
         # encode new value
         new_value_enc = value.encode("utf-16le")
         # move content after change position
+
+        # calc chunk end
+        offset_chunk_end = 4096
+        while offset_chunk_end < offset:
+            offset_chunk_end += 65536
+
         if len(new_value_enc) >= len(old_value):
-            logger.debug("Dest: {0} Src: {1} Count: {2}".format(offset + len(new_value_enc), offset + len(old_value), self._buf.size() - offset - len(new_value_enc)))
-            self._buf.move(offset + len(new_value_enc), offset + len(old_value), self._buf.size() - offset - len(new_value_enc))
+            logger.debug("Dest: {0} Src: {1} Count: {2}".format(offset + len(new_value_enc), offset + len(old_value), offset_chunk_end - offset - len(new_value_enc)))
+            self._buf.move(offset + len(new_value_enc), offset + len(old_value), offset_chunk_end - offset - len(new_value_enc))
         else:
             logger.debug("Dest: {0} Src: {1} Count: {2}".format(offset + len(new_value_enc), offset + len(old_value),
-                                                                self._buf.size() - offset - len(old_value)))
+                                                                offset_chunk_end - offset - len(old_value)))
             self._buf.move(offset + len(new_value_enc), offset + len(old_value),
-                           self._buf.size() - offset - len(old_value))
+                           offset_chunk_end - offset - len(old_value))
         # write new value
         struct.pack_into("<{0}s".format(len(new_value_enc)), self._buf, offset, value.encode("utf-16le"))
 
